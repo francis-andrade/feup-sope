@@ -159,8 +159,6 @@ void findType(char dirPath[], char type[], char func[], char* execArgs[]){
         exit(2);
     }
     
-    
-    
     chdir(dirPath);
 
     while( (dirEntry = readdir(folderPtr)) != NULL){
@@ -183,13 +181,16 @@ void findType(char dirPath[], char type[], char func[], char* execArgs[]){
             
             if(fork() == 0){
                 findType(copySTR, type, func, execArgs);
+		exit(0);
             }
-            //printf("Teste %s\n", strcat(copySTR, dirEntry->d_name));
         }
         else if(S_ISREG(fileStat.st_mode)){
              if(!strcmp(type, "f"))
                 doFunc(strcat(copySTR, dirEntry->d_name), func, execArgs);            
         }
+	else if(S_ISLNK(fileStat.st_mode)){
+	    //verify if link	
+	}
     }
     
     pid_t pid;
