@@ -110,26 +110,20 @@ void findName(char dirPath[], char name[], char func[], char* execArgs[]){
                 continue;
             
             if(fork() == 0){
-                strcpy(copySTR, dirPath);
-                if(dirPath[strlen(dirPath) - 1] != '/')
-                    strcat(copySTR, "/");
                 findName(strcat(copySTR, dirEntry->d_name), name, func, execArgs); //ruiAndreLeixo/Aliados\0                                                                                    
-            }
-            //printf("Teste %s\n", strcat(copySTR, dirEntry->d_name));
+		exit(0);
+	    }
         }
         else if(S_ISREG(fileStat.st_mode)){
             if(!strcmp(dirEntry->d_name, name)){
-                strcpy(copySTR, dirPath);
-                if(dirPath[strlen(dirPath) - 1] != '/')
-                    strcat(copySTR, "/");
-                //doFunc(strcat(copySTR, name), func, execArgs);
+                doFunc(strcat(copySTR, name), func, execArgs);
             }
         }
     }
     
  
     pid_t pid;
-    while ( (pid = waitpid(-1, NULL, 0) != 0)){ //Wait for all children
+    while ((pid = waitpid(-1, NULL, 0))){ //Wait for all children
         if (errno == ECHILD){
             break;
         }
