@@ -113,7 +113,6 @@ void findName(char dirPath[], char name[], char func[], char* execArgs[]){
                 strcpy(copySTR, dirPath);
                 if(dirPath[strlen(dirPath) - 1] != '/')
                     strcat(copySTR, "/");
-                printf("%s%s\n", copySTR,dirEntry->d_name);
                 findName(strcat(copySTR, dirEntry->d_name), name, func, execArgs); //ruiAndreLeixo/Aliados\0                                                                                    
             }
             //printf("Teste %s\n", strcat(copySTR, dirEntry->d_name));
