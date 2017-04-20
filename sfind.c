@@ -12,12 +12,14 @@
 
 //Prototypes
 void sigIntHandler(int signo);
+void sigUsr1Handler(int signo);
 void findName(char dirPath[], char name[], char func[], char* execArgs[]);
 void findType(char dirPath[], char type[], char func[], char* execArgs[]);
 void findPerm(char dirPath[], char perm[], char func[], char* execArgs[]);
 void doFunc(char filePath[], char func[], char* execArgs[]);
 
 pid_t fatherPid;
+int flag = 1;
 
 int main(int argc, char* argv[]){
     if(argc < 5){
@@ -35,14 +37,25 @@ int main(int argc, char* argv[]){
     }
     
     
-    //Signal handler installation
+    //Sigint handler installation
     struct sigaction sigAct;
     sigAct.sa_handler = sigIntHandler;
     sigemptyset(&sigAct.sa_mask);
+    sigaddset(&sigAct.sa_mask, SIGINT);
     sigAct.sa_flags = 0;    
     
     if(sigaction(SIGINT, &sigAct, NULL) < 0){
         fprintf(stderr, "The Interruption Signal Handler couldn't be installed\n");
+        exit(3);
+    }
+
+    sigAct.sa_handler = sigUsr1Handler;
+    sigemptyset(&sigAct.sa_mask);
+    sigaddset(&sigAct.sa_mask, SIGINT);
+    sigAct.sa_flags = 0;    
+    
+    if(sigaction(SIGUSR1, &sigAct, NULL) < 0){
+        fprintf(stderr, "The User1 Signal Handler couldn't be installed\n");
         exit(3);
     }
 
@@ -110,6 +123,7 @@ void findName(char dirPath[], char name[], char func[], char* execArgs[]){
                 continue;
             
             if(fork() == 0){
+		flag = 1;
                 findName(strcat(copySTR, dirEntry->d_name), name, func, execArgs); //ruiAndreLeixo/Aliados\0                                                                                    
 		exit(0);
 	    }
@@ -234,16 +248,28 @@ void findPerm(char dirPath[], char perm[], char func[], char* execArgs[]){
 void sigIntHandler(int signo){
     char answer;
    
-    if(fatherPid == getpid())
-    do {
-        printf("Are you sure you want to terminate (Y/N)? ");
-        scanf("%c", &answer);
+    if(fatherPid == getpid()){
+        do {
+            printf("Are you sure you want to terminate (Y/N)? ");
+            scanf("%c", &answer);
         
-        if(toupper(answer) == 'Y'){
-            kill(0, SIGKILL);
-        }
+            if(toupper(answer) == 'Y'){
+        	kill(0, SIGTERM);
+            }
+	    else if(toupper(answer) == 'N'){
+		kill(0, SIGUSR1);
+	    }
 
-    }while(toupper(answer) != 'Y' && toupper(answer) != 'N');
+	}while(toupper(answer) != 'Y' && toupper(answer) != 'N');
+
+    }else{
+	while(flag) sleep(1);
+	flag = 1;
+    }
+}
+
+void sigUsr1Handler(int signo){
+    flag = 0;
 }
 
 void doFunc(char filePath[], char func[], char* execArgs[]){
