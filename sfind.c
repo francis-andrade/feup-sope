@@ -113,6 +113,11 @@ void findName(char dirPath[], char name[], char func[], char* execArgs[]){
                 findName(strcat(copySTR, dirEntry->d_name), name, func, execArgs); //ruiAndreLeixo/Aliados\0                                                                                    
 		exit(0);
 	    }
+
+	    if(!strcmp(dirEntry->d_name, name)){
+                doFunc(strcat(copySTR, name), func, execArgs);
+            }
+
         }
         else if(S_ISREG(fileStat.st_mode)){
             if(!strcmp(dirEntry->d_name, name)){
