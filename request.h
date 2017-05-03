@@ -4,8 +4,8 @@
 typedef struct{
 	unsigned int request_number;
 	char gender;
-	unsigned int time;
-	unsigned int rejection_number;
+	unsigned int time; // durantion in milliseconds
+	unsigned int rejection_number; //N times rejected
 }Request;
 
 #endif
