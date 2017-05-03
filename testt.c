@@ -1,5 +1,6 @@
 /*
-Este programa de teste serve para verem como funcionam as queues
+ESTE PROGRAMA SERVE PARA VEREM COMO FUNCIONAM AS QUEUES
+ATENÇAO: ESTE FICHEIRO É SO DE TESTES NAO É PARA SER POSTO NO MAKEFILE
 */
 
 #include <stdio.h>
