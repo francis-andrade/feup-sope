@@ -49,7 +49,8 @@ int main(int argc, char* argv[]) {
     pthread_t genTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
     
-   
+   //Missing stuff
+
     pthread_join(genTID, NULL);
 	free(queue);
     unlink("/tmp/entrada");

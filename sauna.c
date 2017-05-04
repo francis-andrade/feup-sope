@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	
 	int maxCapacity = atoi(argv[1]);
     
-    if (maxLotation <= 0){
+    if (maxCapacity <= 0){
 		fprintf(stderr, "Invalid capacity %d\n", maxCapacity);
 		exit(2);
 	}
@@ -28,5 +28,5 @@ int main(int argc, char* argv[]) {
     if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1)
         perror("Error on creating FIFO rejeitados");    
 
-
+	unlink("/tmp/rejeitados");
 }
