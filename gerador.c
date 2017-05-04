@@ -16,6 +16,7 @@ void* generateRequests(void* arg);
 
 
 int genFifoFD;
+int rejFifoFD;
 //int nRequests;
 Request* queue;
 
@@ -40,8 +41,20 @@ int main(int argc, char* argv[]) {
 		exit(3);
 	}
 	
-	if(mkfifo("/tmp/entrada", FIFO_PERM) == -1)
-        perror("Error on creating FIFO entrada");    
+	if(mkfifo("/tmp/entrada", FIFO_PERM) == -1){
+        perror("Error on creating FIFO entrada");
+        exit(4);
+    }
+    
+    if((genFifoFD = open("/temp/entrada", O_WRONLY | O_CREAT)) == -1){
+        perror("Fail on opening entrada for writing");
+        exit(5);
+    }
+
+    if ((rejFifoFD = open("/temp/rejeitados", O_RDONLY)) == -1){
+        perror("Fail on opening entrada for writing");
+        exit(6);
+    }
     
     queue = malloc(maxUsage * sizeof(Request));
     
@@ -58,9 +71,6 @@ int main(int argc, char* argv[]) {
 }
 
 void* generateRequests(void* arg){
-    
-    if((genFifoFD = open("/temp/entrada", O_WRONLY | O_CREAT)) == -1)
-        perror("Fail on opening entrada for writing");
     
     int nRequests = ((int*) arg)[0];
     int maxUsage = ((int*) arg)[1];
