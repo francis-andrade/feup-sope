@@ -8,8 +8,10 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
+#include "miscFunc.h"
 
 #define FIFO_PERM 0700
+#define DEBUG
 
 //Prototypes
 void* generateRequests(void* arg);
@@ -26,6 +28,10 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Wrong usage: ./gerador <n. requests> <max. usage time>\n");
 		exit(1);
 	}
+	
+	
+	clock_gettime(CLOCK_MONOTONIC_RAW, &processStart);
+	
 	
 	int nRequests = atoi(argv[1]);
 
@@ -46,15 +52,17 @@ int main(int argc, char* argv[]) {
         exit(4);
     }
     
-    if((genFifoFD = open("/temp/entrada", O_WRONLY | O_CREAT)) == -1){
+    if((genFifoFD = open("/tmp/entrada", O_WRONLY | O_CREAT | O_NONBLOCK)) == -1){
         perror("Fail on opening entrada for writing");
         exit(5);
     }
 
-    if ((rejFifoFD = open("/temp/rejeitados", O_RDONLY)) == -1){
-        perror("Fail on opening entrada for writing");
-        exit(6);
-    }
+    #ifdef DEBUG
+        if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
+            perror("Fail on opening entrada for writing");
+            exit(6);
+        }
+    #endif
     
     queue = malloc(maxUsage * sizeof(Request));
     
@@ -66,6 +74,7 @@ int main(int argc, char* argv[]) {
 
     pthread_join(genTID, NULL);
 	free(queue);
+    printf("Tempo execucao %f\n", getProcTime());
     unlink("/tmp/entrada");
 
 }
@@ -96,5 +105,5 @@ void* generateRequests(void* arg){
 }
 
 void* rejectedListener(void* arg){
-    
+    return NULL;
 }

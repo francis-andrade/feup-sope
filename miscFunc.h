@@ -2,10 +2,11 @@
 #define MISC_FUNC_H_
 
 #include <sys/time.h>
+#include <time.h>
 
-struct timeval processStart;
+struct timespec processStart;
 
-int getProcTime();
+double getProcTime();
 
 #endif
 
