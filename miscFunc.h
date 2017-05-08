@@ -6,6 +6,12 @@
 
 struct timespec processStart;
 
+
+/**
+*@brief The instruction 'clock_gettime(CLOCK_MONOTONIC_RAW, &processStart);' 
+*must be at the begining of the process
+*@return Returns the current time in miliseconds since the begining of the process
+*/
 double getProcTime();
 
 #endif

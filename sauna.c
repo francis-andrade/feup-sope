@@ -1,5 +1,4 @@
 //sauna.c
-//gerador.c
 #include "request.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,8 +14,9 @@
 int generatorFD;
 int rejectedFD;
 
-int main(int argc, char* argv[]) {
-    if (argc != 2){
+int main(int argc, char* argv[]) 
+    
+	if (argc != 2){
 		fprintf(stderr, "Wrong usage: ./sauna <max capacity>\n");
 		exit(1);
 	}
@@ -28,20 +28,28 @@ int main(int argc, char* argv[]) {
 		exit(2);
 	}
 
+	//Open entrada in reading mode
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
 	
+	//Create rejeitados
     if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
         perror("Error on creating FIFO rejeitados");
 		exit(4);
 	}
 
+	//Open rejeitados in writing mode
 	if ((rejectedFD = open("/tmp/rejeitados", O_WRONLY | O_CREAT)) == -1){
 		perror("Error on opening rejeitados for writing");
 		exit(5);
 	}
+
+	int nRequests;
+
+	//Receive the number of total requests from the generator
+	read(generatorFD, &nRequests, sizeof(nRequests));
 
 	pthread_t waitingLine;
 	pthread_create(&waitingLine, NULL, handleLine, );
