@@ -46,10 +46,10 @@ int main(int argc, char* argv[])
 		exit(5);
 	}
 
-	int nRequests;
+	//int nRequests;
 
 	//Receive the number of total requests from the generator
-	read(generatorFD, &nRequests, sizeof(nRequests));
+	//read(generatorFD, &nRequests, sizeof(nRequests));
 
 	pthread_t waitingLine;
 	pthread_create(&waitingLine, NULL, handleLine, );
@@ -60,8 +60,8 @@ int main(int argc, char* argv[])
 	unlink("/tmp/rejeitados");
 }
 
-void * handleLine(void * arg){
+void * handleRequests(void * arg){
 
-	queue * saunaLine = queue_constructor();
+	return NULL;
 
 }

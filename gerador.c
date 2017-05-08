@@ -12,6 +12,8 @@
 
 #define FIFO_PERM 0700
 #define DEBUG
+#define MAXTIME 50
+#define MINTIME 0
 
 //Prototypes
 void* generateRequests(void* arg);
@@ -19,10 +21,13 @@ void* generateRequests(void* arg);
 
 int genFifoFD;
 int rejFifoFD;
-//int nRequests;
-Request* queue;
 
-queue * requests = queue_contructor();
+unsigned int MGenerated = 0;
+unsigned int FGenerated = 0;
+unsigned int MRejected = 0;
+unsigned int FRejected = 0;
+unsigned int MDiscarded = 0;
+unsigned int FDiscarded = 0;
 
 int main(int argc, char* argv[]) {
 
@@ -44,7 +49,7 @@ int main(int argc, char* argv[]) {
 
 	int maxUsage = atoi(argv[2]);
 
-	if (maxUsage <= 1 || maxUsage >= 999){
+	if (maxUsage > MAXTIME  || maxUsage <= MINTIME){
 		fprintf(stderr, "Invalid number of max usage time\n");
 		exit(3);
 	}
@@ -61,7 +66,7 @@ int main(int argc, char* argv[]) {
         exit(5);
     }
 
-    #ifdef DEBUG
+    #ifndef DEBUG
         //Open rejeitados in reading mode
         if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
             perror("Fail on opening entrada for writing");
@@ -70,20 +75,21 @@ int main(int argc, char* argv[]) {
     #endif
 
     //Send the number of total requests to the sauna
-    write(genFifoFD, &nRequests, sizeof(nRequests));
-    
-    queue = malloc(maxUsage * sizeof(Request));
+    //write(genFifoFD, &nRequests, sizeof(nRequests));
     
     int generatorArgs[] = {nRequests, maxUsage};
-    pthread_t genTID;
+    pthread_t genTID, rejTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
+    pthread_create(&rejTID, NULL, rejectedListener, NULL);
     
    //Missing stuff
 
     pthread_join(genTID, NULL);
-	free(queue);
-    printf("Tempo execucao %f\n", getProcTime());
+    pthread_join(rejTID, NULL);
+
+    //printf("Tempo execucao %f\n", getProcTime());
     unlink("/tmp/entrada");
+    printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
 }
 
@@ -92,27 +98,57 @@ void* generateRequests(void* arg){
     int nRequests = ((int*) arg)[0];
     int maxUsage = ((int*) arg)[1];
     
-    Request * request;
     srand(time(NULL));
     
     int i;
     for(i = 0; i < nRequests; i++){
+        Request * request;
+
         request->request_number = i + 1;
         
-        if(rand() % 2) //0 or 1 upper boundry is included
+        if(rand() % 2){ //0 or 1 upper boundry is included
             request->gender = 'M';
-        else
+            MGenerated++;
+        }
+        else{
             request->gender = 'F';
+            FGenerated++;
+        }
         
-        request->time = rand() % (maxUsage + 1);
+        request->time = rand() % (maxUsage - MINTIME) + MINTIME;
         request->rejection_number = 0;        
         
-        push(requests, request);
+        write(genFifoFD, request, sizeof(Request*));
+        
     }
     
     return NULL;
 }
 
 void* rejectedListener(void* arg){
+    bool keepReading = true;
+    while (keepReading){
+        Request * request;
+        read(rejFifoFD, request, sizeof(Request*));
+        if (request->gender == 'E') // End Marker 
+            keepReading = false;
+        else if(request->rejection_number < 3){
+            write(genFifoFD, request, sizeof(Request*));
+            if (request->gender == 'M')
+                MRejected++;
+            else
+                FRejected++;
+        }
+        else{
+            if (request->gender == 'M'){
+                MRejected++;
+                MDiscarded++;
+            }
+            else{
+                FRejected++;
+                FDiscarded++;
+            }
+        }
+    }
     return NULL;
 }
