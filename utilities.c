@@ -1,4 +1,4 @@
-#include "miscFunc.h"
+#include "utilities.h"
 #include <sys/time.h>
 
 double getProcTime(){

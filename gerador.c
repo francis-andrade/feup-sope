@@ -8,7 +8,10 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
-#include "miscFunc.h"
+#include <stdbool.h>
+#include <math.h>
+#include <fenv.h>
+#include "utilities.h"
 
 #define FIFO_PERM 0700
 #define DEBUG
@@ -19,6 +22,7 @@
 void* generateRequests(void* arg);
 void* rejectedListener(void* arg);
 
+
 int genFifoFD;
 int rejFifoFD;
 
@@ -28,6 +32,8 @@ unsigned int MRejected = 0;
 unsigned int FRejected = 0;
 unsigned int MDiscarded = 0;
 unsigned int FDiscarded = 0;
+
+FILE * gerpid;
 
 int main(int argc, char* argv[]) {
 
@@ -74,6 +80,7 @@ int main(int argc, char* argv[]) {
         }
     #endif
 
+    gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
     write(genFifoFD, &nRequests, sizeof(nRequests));
     
@@ -90,7 +97,7 @@ int main(int argc, char* argv[]) {
     close(rejFifoFD);
 
     unlink("/tmp/entrada");
-    printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
+    fprintf(gerpid,"\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
 }
 
@@ -103,23 +110,28 @@ void* generateRequests(void* arg){
     
     int i;
     for(i = 0; i < nRequests; i++){
-        Request* request = malloc(sizeof(Request));
 
-        request->request_number = i + 1;
+        Request request;
+
+
+        request.request_number = i + 1;
         
         if(rand() % 2){ //0 or 1 upper boundry is included
-            request->gender = 'M';
+            request.gender = 'M';
             MGenerated++;
         }
         else{
-            request->gender = 'F';
+            request.gender = 'F';
             FGenerated++;
         }
         
-        request->time = rand() % (maxUsage - MINTIME) + MINTIME;
-        request->rejection_number = 0;        
-        
-        write(genFifoFD, *request, sizeof(Request));
+        request.time = rand() % (maxUsage - MINTIME) + MINTIME;
+        request.rejection_number = 0;  
+	double time=round(getProcTime()*100)/100;      
+        fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request.request_number, request.gender, request.time, "PEDIDO");
+        write(genFifoFD, & request, sizeof(Request));
+       
+
         
     }
     
@@ -129,27 +141,36 @@ void* generateRequests(void* arg){
 void* rejectedListener(void* arg){
     char keepReading = 1;
     while (keepReading){
+
         Request request;
-        read(rejFifoFD, &request, sizeof(Request));
+        read(rejFifoFD, & request, sizeof(Request));
         if (request.gender == 'E') // End Marker 
             keepReading = 0;
         else if(request.rejection_number < 3){
-            write(genFifoFD, request, sizeof(Request*));
-            if (request.gender == 'M')
-                MRejected++;
-            else
-                FRejected++;
-        }
-        else{
+	    double time=round(getProcTime()*100)/100;  
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "REJEITADO");
+	    write(genFifoFD, & request, sizeof(Request));
             if (request.gender == 'M'){
                 MRejected++;
-                MDiscarded++;
             }
             else{
                 FRejected++;
-                FDiscarded++;
             }
-        }
-    }
+       
+	}
+	else{
+	    double time=round(getProcTime()*100)/100;  
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "DESCARTADO");
+	    write(genFifoFD, & request, sizeof(Request));
+            if (request.gender == 'M'){
+                MRejected++;
+		MDiscarded++;
+            }
+            else{
+                FRejected++;
+		FDiscarded++;
+            }
+	}
+    } 
     return NULL;
 }

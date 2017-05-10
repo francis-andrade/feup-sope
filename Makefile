@@ -1,14 +1,18 @@
 #!/bin/bash
 #Makefile for generator and sauna binaries
 all: gerador sauna
-gerador: gerador.c request.h queue.h queue.c miscFunc.c miscFunc.h
-	gcc -Wall gerador.c queue.c miscFunc.c -o gerador -pthread
-	
-gerDBUG: gerador.c request.h queue.h queue.c miscFunc.c miscFunc.h
-	gcc -Wall -g gerador.c queue.c miscFunc.c -o gerador -pthread
+DEBUG: gerDBUG saunDBUG
 
-sauna: sauna.c request.h queue.h queue.c
-	gcc -Wall sauna.c queue.c -o sauna -pthread
+
+gerador: gerador.c request.h utilities.c utilities.h
+	gcc -Wall gerador.c utilities.c -o gerador -pthread -lm
+sauna: sauna.c request.h utilities.c utilities.h
+	gcc -Wall sauna.c utilities.c -o sauna -pthread -lm
+
+gerDBUG: gerador.c request.h utilities.c utilities.h
+	gcc -Wall -g gerador.c utilities.c -o gerador -pthread -lm
+saunDBUG: sauna.c request.h utilities.c utilities.h
+	gcc -Wall -g sauna.c utilities.c -o sauna -pthread -lm
 
 clean:
 	rm -f gerador sauna

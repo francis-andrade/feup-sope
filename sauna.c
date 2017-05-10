@@ -8,10 +8,10 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
-#include <semaphore.h>
+#include <semaphore.h>open
 
 #define FIFO_PERM 0700
-
+#define DEBUG
 //prototypes
 void * requestHandler(void * arg);
 
@@ -38,12 +38,13 @@ int main(int argc, char* argv[]){
 		exit(2);
 	}
 	
-
+#ifndef DEBUG
 	//FIFO's
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
+#endif
 	
 
     if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
