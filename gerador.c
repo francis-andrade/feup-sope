@@ -128,7 +128,7 @@ void* generateRequests(void* arg){
         request.time = rand() % (maxUsage - MINTIME) + MINTIME;
         request.rejection_number = 0;  
 	double time=round(getProcTime()*100)/100;      
-        fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request.request_number, request.gender, request.time, "PEDIDO");
+        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "PEDIDO");
         write(genFifoFD, & request, sizeof(Request));
        
 
@@ -148,7 +148,7 @@ void* rejectedListener(void* arg){
             keepReading = 0;
         else if(request.rejection_number < 3){
 	    double time=round(getProcTime()*100)/100;  
-	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "REJEITADO");
+	   fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "REJEITADO");
 	    write(genFifoFD, & request, sizeof(Request));
             if (request.gender == 'M'){
                 MRejected++;
@@ -160,7 +160,7 @@ void* rejectedListener(void* arg){
 	}
 	else{
 	    double time=round(getProcTime()*100)/100;  
-	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "DESCARTADO");
+	    fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "DESCARTADO");
 	    write(genFifoFD, & request, sizeof(Request));
             if (request.gender == 'M'){
                 MRejected++;

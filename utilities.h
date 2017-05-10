@@ -14,6 +14,14 @@ struct timespec processStart;
 */
 double getProcTime();
 
+/**
+*@brief This function returns a number in the form of a string with a certain width
+*@param n number that is going to be passed to a string with a certain width
+*@param width width of the string that is going to be returned
+*@param decimal number of decimal places. They can only be 0, 1 or 2
+*@return Returns a string
+*/
+char * swidth(double n, int width, int decimal);
 
 #endif
 
