@@ -66,10 +66,9 @@ int main(int argc, char* argv[]){
 	
 	while(!read(generatorFD, &request, sizeof(Request*){
 		if(request->gender != currentGender){
-			if(request->++rejection_number == 3)
-				continue; //Discarded
-			
+			request->rejection_number++;			
 			write(rejectedFD, &request, sizeof(Request*));
+			
 		else{
 			currentGender = request->gender;
 			pthread_create(threadIDs[index], NULL, requestHandler, request);
