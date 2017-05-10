@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
-#include <semaphore.h>open
+#include <semaphore.h>
 
 #define FIFO_PERM 0700
 #define DEBUG
