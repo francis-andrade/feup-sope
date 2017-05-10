@@ -9,7 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define FIFO_PERM 070
+#define FIFO_PERM 0700
 void * handleRequest(void * arg);
 
 //Global variables
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 		else{
 			currentGender = request->gender;
 			pthread_create(threadIDs[index], NULL, requestHandler, request);
-			index++;
+			
 		}
 	}
 	
