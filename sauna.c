@@ -59,7 +59,7 @@ int main(int argc, char* argv[]){
 
 
 	int nRequests;
-	read(generatorFD, &nRequests, size(int));
+	read(generatorFD, &nRequests, sizeof(int));
 
 	sem_init(&steamRoomSem,0, maxCapacity);//Steam Room semaphore is initialized with maxCapacity
 	sem_init(&remainingRequests, 0, nRequests);
@@ -92,7 +92,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	int existingThrds = index - 1;
-	for(index = 0; index < existingThrds, index++)
+	for(index = 0; index < existingThrds; index++)
 		pthread_join(threadIDs[index], NULL);
 
 	request.gender = 'E';
