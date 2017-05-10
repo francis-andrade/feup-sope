@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 		else{
 			currentGender = request->gender;
 			pthread_create(threadIDs[index], NULL, requestHandler, request);
-			index--;
+			index++;
 		}
 	}
 	
