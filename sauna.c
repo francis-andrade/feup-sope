@@ -11,7 +11,7 @@
 #include <semaphore.h>
 
 #define FIFO_PERM 0700
-
+#define DEBUG
 //prototypes
 void * requestHandler(void * arg);
 
@@ -38,12 +38,13 @@ int main(int argc, char* argv[]){
 		exit(2);
 	}
 	
-
+#ifndef DEBUG
 	//FIFO's
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
+#endif
 	
 
     if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
@@ -59,7 +60,7 @@ int main(int argc, char* argv[]){
 
 
 	int nRequests;
-	read(generatorFD, &nRequests, size(int));
+	read(generatorFD, &nRequests, sizeof(int));
 
 	sem_init(&steamRoomSem,0, maxCapacity);//Steam Room semaphore is initialized with maxCapacity
 	sem_init(&remainingRequests, 0, nRequests);
@@ -92,7 +93,7 @@ int main(int argc, char* argv[]){
 	}
 	
 	int existingThrds = index - 1;
-	for(index = 0; index < existingThrds, index++)
+	for(index = 0; index < existingThrds; index++)
 		pthread_join(threadIDs[index], NULL);
 
 	request.gender = 'E';

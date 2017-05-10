@@ -1,5 +1,5 @@
-#ifndef MISC_FUNC_H_ 
-#define MISC_FUNC_H_
+#ifndef UTILITIES_H_ 
+#define UTILITIES_H_
 
 #include <sys/time.h>
 #include <time.h>
@@ -24,4 +24,5 @@ double getProcTime();
 char * swidth(double n, int width, int decimal);
 
 #endif
+
 

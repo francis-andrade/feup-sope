@@ -78,3 +78,4 @@ char * swidth(double n, int width, int decimal){
 
 	
 }
+
