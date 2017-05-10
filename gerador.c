@@ -82,19 +82,20 @@ int main(int argc, char* argv[]) {
 
     gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
-    //write(genFifoFD, &nRequests, sizeof(nRequests));
+    write(genFifoFD, &nRequests, sizeof(nRequests));
     
     int generatorArgs[] = {nRequests, maxUsage};
     pthread_t genTID, rejTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
     pthread_create(&rejTID, NULL, rejectedListener, NULL);
     
-   //Missing stuff
 
     pthread_join(genTID, NULL);
     pthread_join(rejTID, NULL);
 
-    //printf("Tempo execucao %f\n", getProcTime());
+    close(genFifoFD);
+    close(rejFifoFD);
+
     unlink("/tmp/entrada");
     fprintf(gerpid,"\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
@@ -109,24 +110,28 @@ void* generateRequests(void* arg){
     
     int i;
     for(i = 0; i < nRequests; i++){
-        Request * request=malloc(sizeof(Request));
 
-        request->request_number = i + 1;
+        Request request;
+
+
+        request.request_number = i + 1;
         
         if(rand() % 2){ //0 or 1 upper boundry is included
-            request->gender = 'M';
+            request.gender = 'M';
             MGenerated++;
         }
         else{
-            request->gender = 'F';
+            request.gender = 'F';
             FGenerated++;
         }
         
-        request->time = rand() % (maxUsage - MINTIME) + MINTIME;
-        request->rejection_number = 0;  
+        request.time = rand() % (maxUsage - MINTIME) + MINTIME;
+        request.rejection_number = 0;  
 	double time=round(getProcTime()*100)/100;      
-        fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "PEDIDO");
-        write(genFifoFD, request, sizeof(Request*));
+        fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request.request_number, request.gender, request.time, "PEDIDO");
+        write(genFifoFD, & request, sizeof(Request));
+       
+
         
     }
     
@@ -134,34 +139,38 @@ void* generateRequests(void* arg){
 }
 
 void* rejectedListener(void* arg){
-    bool keepReading = true;
+    char keepReading = 1;
     while (keepReading){
-        Request * request=malloc(sizeof(Request));
-        read(rejFifoFD, request, sizeof(Request*));
-        if (request->gender == 'E') // End Marker 
-            keepReading = false;
-        else if(request->rejection_number < 3){
+
+        Request request;
+        read(rejFifoFD, & request, sizeof(Request));
+        if (request.gender == 'E') // End Marker 
+            keepReading = 0;
+        else if(request.rejection_number < 3){
 	    double time=round(getProcTime()*100)/100;  
-            write(genFifoFD, request, sizeof(Request*));
-	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "REJEITADO");
-            if (request->gender == 'M')
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "REJEITADO");
+	    write(genFifoFD, & request, sizeof(Request));
+            if (request.gender == 'M'){
                 MRejected++;
-            else
-                FRejected++;
-        }
-        else{
-	    double time=round(getProcTime()*100)/100;  
-            write(genFifoFD, request, sizeof(Request*));
-	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "DESCARTADO");
-            if (request->gender == 'M'){
-                MRejected++;
-                MDiscarded++;
             }
             else{
                 FRejected++;
-                FDiscarded++;
             }
-        }
-    }
+       
+	}
+	else{
+	    double time=round(getProcTime()*100)/100;  
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), 		request.request_number, request.gender, request.time, "DESCARTADO");
+	    write(genFifoFD, & request, sizeof(Request));
+            if (request.gender == 'M'){
+                MRejected++;
+		MDiscarded++;
+            }
+            else{
+                FRejected++;
+		FDiscarded++;
+            }
+	}
+    } 
     return NULL;
 }
