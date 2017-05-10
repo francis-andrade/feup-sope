@@ -8,16 +8,21 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 #define FIFO_PERM 0700
-void * handleRequest(void * arg);
+
+//prototypes
+void * requestHandler(void * arg);
 
 //Global variables
 int generatorFD;
 int rejectedFD;
+
+sem_t thrdArgSem;
+
 sem_t steamRoomSem;
-
-
+sem_t remainingRequests;
 
 int main(int argc, char* argv[]){
 	
@@ -33,19 +38,12 @@ int main(int argc, char* argv[]){
 		exit(2);
 	}
 	
-	sem_init(&steamRoomSem,0, maxCapacity);//Steam Room semaphore is initialized with maxCapacity
-	
 
 	//FIFO's
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
-	
-	char nRequests[257];
-	read(generatorFD, nRequests, size(int));
-	pthread_t* threadIDs = malloc(atoi(nRequests) * sizeof(pthread));
-	int index = 0;
 	
 
     if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
@@ -60,36 +58,68 @@ int main(int argc, char* argv[]){
 	}
 
 
-	Request* request;
-	read(generatorFD, &request, sizeof(Request*)
+	int nRequests;
+	read(generatorFD, &nRequests, size(int));
+
+	sem_init(&steamRoomSem,0, maxCapacity);//Steam Room semaphore is initialized with maxCapacity
+	sem_init(&remainingRequests, 0, nRequests);
+	sem_init(&thrdArgSem, 0, 0);
+
+
+	pthread_t* threadIDs = malloc(nRequests * sizeof(pthread_t));
+	int index = 0;
+
+
+	Request request;
+	read(generatorFD, &request, sizeof(Request));
 	char currentGender = request.gender; //1st person to enter
-	
-	while(!read(generatorFD, &request, sizeof(Request*){
-		if(request->gender != currentGender){
-			request->rejection_number++;			
-			write(rejectedFD, &request, sizeof(Request*));
-			
+
+	int sval = 0;
+	sem_getvalue(&remainingRequests, &sval);
+	while(sval){
+		read(generatorFD, &request, sizeof(Request));
+		if(request.gender != currentGender){
+			request.rejection_number++;			
+			write(rejectedFD, &request, sizeof(Request));
+		}
 		else{
-			currentGender = request->gender;
-			pthread_create(threadIDs[index], NULL, requestHandler, request);
+			currentGender = request.gender;
+			pthread_create(&threadIDs[index], NULL, requestHandler, &request);
+			sem_wait(&thrdArgSem);
 			index++;
 		}
+		sem_getvalue(&remainingRequests, &sval);
 	}
 	
 	int existingThrds = index - 1;
 	for(index = 0; index < existingThrds, index++)
 		pthread_join(threadIDs[index], NULL);
 
-	//Missing stuff
-	//Free / delete stuff
-	ptread_join(waitingLine, NULL);
+	request.gender = 'E';
+
+	write(rejectedFD, &request, sizeof(Request));
+	close(rejectedFD);
+	close(generatorFD);
+	
 	free(threadIDs);
 	unlink("/tmp/rejeitados");
 }
 
-void * handleRequest(void * arg){
+void * requestHandler(void * arg){
+	Request* request = (Request*)arg;
+	sem_post(&thrdArgSem);
+
+	struct timespec sleepTime;
+
+	sleepTime.tv_sec = 0;
+	sleepTime.tv_nsec = request->time * 1000000;
+
 	sem_wait(&steamRoomSem);
+
+	while(nanosleep(&sleepTime, &sleepTime) == -1);
+
 	sem_post(&steamRoomSem);
+	sem_wait(&remainingRequests);
 	return NULL;
 
 }

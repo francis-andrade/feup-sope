@@ -17,7 +17,7 @@
 
 //Prototypes
 void* generateRequests(void* arg);
-
+void* rejectedListener(void* arg);
 
 int genFifoFD;
 int rejFifoFD;
@@ -75,19 +75,20 @@ int main(int argc, char* argv[]) {
     #endif
 
     //Send the number of total requests to the sauna
-    //write(genFifoFD, &nRequests, sizeof(nRequests));
+    write(genFifoFD, &nRequests, sizeof(nRequests));
     
     int generatorArgs[] = {nRequests, maxUsage};
     pthread_t genTID, rejTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
     pthread_create(&rejTID, NULL, rejectedListener, NULL);
     
-   //Missing stuff
 
     pthread_join(genTID, NULL);
     pthread_join(rejTID, NULL);
 
-    //printf("Tempo execucao %f\n", getProcTime());
+    close(genFifoFD);
+    close(rejFifoFD);
+
     unlink("/tmp/entrada");
     printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
@@ -102,7 +103,7 @@ void* generateRequests(void* arg){
     
     int i;
     for(i = 0; i < nRequests; i++){
-        Request * request;
+        Request* request = malloc(sizeof(Request));
 
         request->request_number = i + 1;
         
@@ -118,7 +119,7 @@ void* generateRequests(void* arg){
         request->time = rand() % (maxUsage - MINTIME) + MINTIME;
         request->rejection_number = 0;        
         
-        write(genFifoFD, request, sizeof(Request*));
+        write(genFifoFD, *request, sizeof(Request));
         
     }
     
@@ -126,21 +127,21 @@ void* generateRequests(void* arg){
 }
 
 void* rejectedListener(void* arg){
-    bool keepReading = true;
+    char keepReading = 1;
     while (keepReading){
-        Request * request;
-        read(rejFifoFD, request, sizeof(Request*));
-        if (request->gender == 'E') // End Marker 
-            keepReading = false;
-        else if(request->rejection_number < 3){
+        Request request;
+        read(rejFifoFD, &request, sizeof(Request));
+        if (request.gender == 'E') // End Marker 
+            keepReading = 0;
+        else if(request.rejection_number < 3){
             write(genFifoFD, request, sizeof(Request*));
-            if (request->gender == 'M')
+            if (request.gender == 'M')
                 MRejected++;
             else
                 FRejected++;
         }
         else{
-            if (request->gender == 'M'){
+            if (request.gender == 'M'){
                 MRejected++;
                 MDiscarded++;
             }
