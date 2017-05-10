@@ -9,7 +9,7 @@
 #include <time.h>
 #include <pthread.h>
 
-#define FIFO_PERM 0700
+#define FIFO_PERM 070
 void * handleRequest(void * arg);
 
 //Global variables
