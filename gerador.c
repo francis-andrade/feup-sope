@@ -8,7 +8,10 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
-#include "miscFunc.h"
+#include <stdbool.h>
+#include <math.h>
+#include <fenv.h>
+#include "utilities.h"
 
 #define FIFO_PERM 0700
 #define DEBUG
@@ -17,6 +20,7 @@
 
 //Prototypes
 void* generateRequests(void* arg);
+void* rejectedListener(void* arg);
 
 
 int genFifoFD;
@@ -28,6 +32,8 @@ unsigned int MRejected = 0;
 unsigned int FRejected = 0;
 unsigned int MDiscarded = 0;
 unsigned int FDiscarded = 0;
+
+FILE * gerpid;
 
 int main(int argc, char* argv[]) {
 
@@ -74,6 +80,7 @@ int main(int argc, char* argv[]) {
         }
     #endif
 
+    gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
     //write(genFifoFD, &nRequests, sizeof(nRequests));
     
@@ -89,7 +96,7 @@ int main(int argc, char* argv[]) {
 
     //printf("Tempo execucao %f\n", getProcTime());
     unlink("/tmp/entrada");
-    printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
+    fprintf(gerpid,"\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
 }
 
@@ -102,7 +109,7 @@ void* generateRequests(void* arg){
     
     int i;
     for(i = 0; i < nRequests; i++){
-        Request * request;
+        Request * request=malloc(sizeof(Request));
 
         request->request_number = i + 1;
         
@@ -116,8 +123,9 @@ void* generateRequests(void* arg){
         }
         
         request->time = rand() % (maxUsage - MINTIME) + MINTIME;
-        request->rejection_number = 0;        
-        
+        request->rejection_number = 0;  
+	double time=round(getProcTime()*100)/100;      
+        fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "PEDIDO");
         write(genFifoFD, request, sizeof(Request*));
         
     }
@@ -128,18 +136,23 @@ void* generateRequests(void* arg){
 void* rejectedListener(void* arg){
     bool keepReading = true;
     while (keepReading){
-        Request * request;
+        Request * request=malloc(sizeof(Request));
         read(rejFifoFD, request, sizeof(Request*));
         if (request->gender == 'E') // End Marker 
             keepReading = false;
         else if(request->rejection_number < 3){
+	    double time=round(getProcTime()*100)/100;  
             write(genFifoFD, request, sizeof(Request*));
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "REJEITADO");
             if (request->gender == 'M')
                 MRejected++;
             else
                 FRejected++;
         }
         else{
+	    double time=round(getProcTime()*100)/100;  
+            write(genFifoFD, request, sizeof(Request*));
+	    fprintf(gerpid,"%lf - %d - %d: %c - %d - %s\n",time, getpid(), request->request_number, request->gender, request->time, "DESCARTADO");
             if (request->gender == 'M'){
                 MRejected++;
                 MDiscarded++;

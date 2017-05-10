@@ -14,5 +14,6 @@ struct timespec processStart;
 */
 double getProcTime();
 
+
 #endif
 
