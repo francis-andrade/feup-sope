@@ -9,11 +9,15 @@
 #include <time.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
+#include "utilities.h"
 
 #define FIFO_PERM 0700
 #define DEBUG
+
 //prototypes
 void * requestHandler(void * arg);
+void sigIntHandler(int signal);
 
 //Global variables
 int generatorFD;
@@ -31,6 +35,16 @@ int main(int argc, char* argv[]){
 		exit(1);
 	}
 	
+	
+	//Intalling sigIntHandler
+	struct sigaction sigActInt;
+    sigActInt.sa_handler = sigIntHandler;
+    sigemptyset(&sigActInt.sa_mask);
+    sigActInt.sa_flags = 0;
+    sigaction(SIGINT, &sigActInt, NULL);
+    //--
+    
+	
 	int maxCapacity = atoi(argv[1]);
     
     if (maxCapacity <= 0){
@@ -38,26 +52,26 @@ int main(int argc, char* argv[]){
 		exit(2);
 	}
 	
+	if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
+        perror("Error on creating FIFO rejeitados");
+		exit(4);
+	}
+
+	
 #ifndef DEBUG
 	//FIFO's
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
-#endif
 	
-
-    if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
-        perror("Error on creating FIFO rejeitados");
-		exit(4);
-	}
-
-
-	if ((rejectedFD = open("/tmp/rejeitados", O_WRONLY | O_CREAT)) == -1){
+	if ((rejectedFD = open("/tmp/rejeitados", O_WRONLY | DEBUG_OPT)) == -1){
 		perror("Error on opening rejeitados for writing");
 		exit(5);
 	}
+#endif
 
+	
 
 	int nRequests;
 	read(generatorFD, &nRequests, sizeof(int));
@@ -106,7 +120,7 @@ int main(int argc, char* argv[]){
 	unlink("/tmp/rejeitados");
 }
 
-void * requestHandler(void * arg){
+void* requestHandler(void* arg){
 	Request* request = (Request*)arg;
 	sem_post(&thrdArgSem);
 
@@ -123,4 +137,9 @@ void * requestHandler(void * arg){
 	sem_wait(&remainingRequests);
 	return NULL;
 
+}
+
+void sigIntHandler(int signal){
+	unlink("/tmp/rejeitados");
+    exit(6);
 }

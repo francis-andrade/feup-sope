@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <math.h>
 #include <fenv.h>
+#include <signal.h>
 #include "utilities.h"
 
 #define FIFO_PERM 0700
@@ -21,7 +22,7 @@
 //Prototypes
 void* generateRequests(void* arg);
 void* rejectedListener(void* arg);
-
+void sigIntHandler(int signal);
 
 int genFifoFD;
 int rejFifoFD;
@@ -41,6 +42,14 @@ int main(int argc, char* argv[]) {
 		fprintf(stderr, "Wrong usage: ./gerador <n. requests> <max. usage time>\n");
 		exit(1);
 	}
+	
+    //Intalling sigIntHandler
+	struct sigaction sigActInt;
+    sigActInt.sa_handler = sigIntHandler;
+    sigemptyset(&sigActInt.sa_mask);
+    sigActInt.sa_flags = 0;
+    sigaction(SIGINT, &sigActInt, NULL);
+    //--
 	
 	
 	clock_gettime(CLOCK_MONOTONIC_RAW, &processStart);
@@ -76,7 +85,7 @@ int main(int argc, char* argv[]) {
         //Open rejeitados in reading mode
         if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
             perror("Fail on opening entrada for writing");
-            exit(6);
+            exit(7);
         }
     #endif
 
@@ -173,4 +182,9 @@ void* rejectedListener(void* arg){
 	}
     } 
     return NULL;
+}
+
+void sigIntHandler(int signal){
+	unlink("/tmp/entrada");
+    exit(-6);
 }
