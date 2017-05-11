@@ -15,7 +15,6 @@
 #include "utilities.h"
 
 #define FIFO_PERM 0700
-#define DEBUG
 #define MAXTIME 50
 #define MINTIME 0
 
@@ -69,25 +68,34 @@ int main(int argc, char* argv[]) {
 		exit(3);
 	}
 	
+    printf("Vou tentar criar o Fifo de entrada\n");
+
     //Create entrada
 	if(mkfifo("/tmp/entrada", FIFO_PERM) == -1){
         perror("Error on creating FIFO entrada");
         exit(4);
     }
+
+ 	printf("Fifo de entrada criado, vou tentar abri-lo em writemode\n");   
     
     //Open entrada in writing mode
-    if((genFifoFD = open("/tmp/entrada", O_WRONLY | O_CREAT | O_NONBLOCK)) == -1){
+    if((genFifoFD = open("/tmp/entrada", O_WRONLY | O_CREAT)) == -1){
         perror("Fail on opening entrada for writing");
         exit(5);
     }
 
     #ifndef DEBUG
+
+	    printf("Fifo de entrada aberto em readmode, vou tentar abrir rejeitados em readmode\n");
+
         //Open rejeitados in reading mode
         if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
             perror("Fail on opening entrada for writing");
             exit(7);
         }
     #endif
+
+	printf("Fifo de rejeitados aberto em readmode\n");
 
     gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
@@ -136,14 +144,13 @@ void* generateRequests(void* arg){
         
         request.time = rand() % (maxUsage - MINTIME) + MINTIME;
         request.rejection_number = 0;  
-	double time=round(getProcTime()*100)/100;      
+	    double time=round(getProcTime()*100)/100;      
         fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "PEDIDO");
         write(genFifoFD, & request, sizeof(Request));
-       
-
-        
+         
     }
-    
+
+    pthread_exit(NULL);
     return NULL;
 }
 
@@ -153,34 +160,42 @@ void* rejectedListener(void* arg){
 
         Request request;
         read(rejFifoFD, & request, sizeof(Request));
+        
         if (request.gender == 'E') // End Marker 
             keepReading = 0;
+        
         else if(request.rejection_number < 3){
-	    double time=round(getProcTime()*100)/100;  
-	   fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "REJEITADO");
-	    write(genFifoFD, & request, sizeof(Request));
+	        
+            double time=round(getProcTime()*100)/100;  
+	        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "REJEITADO");
+	        write(genFifoFD, & request, sizeof(Request));
+           
             if (request.gender == 'M'){
                 MRejected++;
             }
+            
             else{
                 FRejected++;
             }
-       
-	}
-	else{
-	    double time=round(getProcTime()*100)/100;  
-	    fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "DESCARTADO");
-	    write(genFifoFD, & request, sizeof(Request));
+	    }
+	    else{
+	        
+            double time=round(getProcTime()*100)/100;  
+	        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "DESCARTADO");
+	        write(genFifoFD, & request, sizeof(Request));
+            
             if (request.gender == 'M'){
                 MRejected++;
-		MDiscarded++;
+		        MDiscarded++;
             }
+            
             else{
                 FRejected++;
-		FDiscarded++;
+		        FDiscarded++;
             }
-	}
-    } 
+	    }
+    }
+    pthread_exit(NULL);
     return NULL;
 }
 

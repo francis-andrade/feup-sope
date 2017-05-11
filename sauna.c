@@ -13,7 +13,6 @@
 #include "utilities.h"
 
 #define FIFO_PERM 0700
-#define DEBUG
 
 //prototypes
 void * requestHandler(void * arg);
@@ -51,6 +50,8 @@ int main(int argc, char* argv[]){
 		fprintf(stderr, "Invalid capacity %d\n", maxCapacity);
 		exit(2);
 	}
+
+	printf("Vou tentar criar o Fifo de rejeitados\n");
 	
 	if(mkfifo("/tmp/rejeitados", FIFO_PERM) == -1){
         perror("Error on creating FIFO rejeitados");
@@ -60,18 +61,23 @@ int main(int argc, char* argv[]){
 	
 #ifndef DEBUG
 	//FIFO's
+
+	printf("Fifo de rejeitados criado, vou tentar abrir entrada em readmode\n");
+
 	if ((generatorFD = open("/tmp/entrada", O_RDONLY)) == -1){
 		perror("Fail on opening entrada for reading");
 		exit(3);
 	}
+
+	printf("Fifo de entrada aberto em readmode, vou tentar abrir rejeitados em writemode\n");
 	
-	if ((rejectedFD = open("/tmp/rejeitados", O_WRONLY | DEBUG_OPT)) == -1){
+	if ((rejectedFD = open("/tmp/rejeitados", O_WRONLY | O_CREAT)) == -1){
 		perror("Error on opening rejeitados for writing");
 		exit(5);
 	}
 #endif
 
-	
+	printf("Fifo de rejeitados aberto em writemode\n");
 
 	int nRequests;
 	read(generatorFD, &nRequests, sizeof(int));
@@ -135,6 +141,8 @@ void* requestHandler(void* arg){
 
 	sem_post(&steamRoomSem);
 	sem_wait(&remainingRequests);
+	
+	pthread_exit(NULL);
 	return NULL;
 
 }

@@ -17,3 +17,5 @@ saunDBUG: sauna.c request.h utilities.c utilities.h
 
 clean:
 	rm -f gerador sauna
+	rm -f /tmp/entrada
+	rm -f /tmp/rejeitados
