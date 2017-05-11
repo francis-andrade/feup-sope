@@ -95,26 +95,31 @@ int main(int argc, char* argv[]) {
         }
     #endif
 
-	printf("Fifo de rejeitados aberto em readmode\n");
+	printf("Fifo de rejeitados aberto em readmode, vou tentar enviar o nr de requests\n");
 
     gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
     write(genFifoFD, &nRequests, sizeof(nRequests));
+
+    printf("Nr de requests enviado, vou tentar criar as threads de processamento\n");
     
     int generatorArgs[] = {nRequests, maxUsage};
     pthread_t genTID, rejTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
     pthread_create(&rejTID, NULL, rejectedListener, NULL);
     
+    printf("Threads criadas, vou esperar que elas terminem\n");
 
     pthread_join(genTID, NULL);
     pthread_join(rejTID, NULL);
+
+    printf("Threads terminadas, vou terminar o programa\n");
 
     close(genFifoFD);
     close(rejFifoFD);
 
     unlink("/tmp/entrada");
-    fprintf(gerpid,"\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
+    printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
 
 }
 
@@ -125,6 +130,8 @@ void* generateRequests(void* arg){
     
     srand(time(NULL));
     
+    printf("Sou a Thread geradora, vou gerar os requests\n");
+
     int i;
     for(i = 0; i < nRequests; i++){
 
@@ -150,12 +157,17 @@ void* generateRequests(void* arg){
          
     }
 
+    printf("Gerei os requests todos, vou sair\n");
+
     pthread_exit(NULL);
     return NULL;
 }
 
 void* rejectedListener(void* arg){
     char keepReading = 1;
+
+    printf("Sou a Thread que gera os rejeitados, vou trabalhar\n");
+
     while (keepReading){
 
         Request request;
@@ -177,6 +189,9 @@ void* rejectedListener(void* arg){
             else{
                 FRejected++;
             }
+
+            printf("Pedido rejeitado recebido, vou reenvia-lo\n");
+
 	    }
 	    else{
 	        
@@ -193,8 +208,14 @@ void* rejectedListener(void* arg){
                 FRejected++;
 		        FDiscarded++;
             }
+
+            printf("Pedido rejeitado 3x, vou descarta-lo\n");
+
 	    }
     }
+
+    printf("Ja nao ha mais pedidos rejeitados, vou sair\n");
+
     pthread_exit(NULL);
     return NULL;
 }
