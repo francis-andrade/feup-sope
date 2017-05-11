@@ -68,15 +68,11 @@ int main(int argc, char* argv[]) {
 		exit(3);
 	}
 	
-    printf("Vou tentar criar o Fifo de entrada\n");
-
     //Create entrada
 	if(mkfifo("/tmp/entrada", FIFO_PERM) == -1){
         perror("Error on creating FIFO entrada");
         exit(4);
     }
-
- 	printf("Fifo de entrada criado, vou tentar abri-lo em writemode\n");   
     
     //Open entrada in writing mode
     if((genFifoFD = open("/tmp/entrada", O_WRONLY | O_CREAT)) == -1){
@@ -84,36 +80,23 @@ int main(int argc, char* argv[]) {
         exit(5);
     }
 
-    #ifndef DEBUG
-
-	    printf("Fifo de entrada aberto em readmode, vou tentar abrir rejeitados em readmode\n");
-
-        //Open rejeitados in reading mode
-        if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
-            perror("Fail on opening entrada for writing");
-            exit(7);
-        }
-    #endif
-
-	printf("Fifo de rejeitados aberto em readmode, vou tentar enviar o nr de requests\n");
+    //Open rejeitados in reading mode
+    if ((rejFifoFD = open("/tmp/rejeitados", O_RDONLY)) == -1){
+        perror("Fail on opening entrada for writing");
+        exit(7);
+    }
 
     gerpid=fopen("/tmp/ger.pid", "w");
     //Send the number of total requests to the sauna
     write(genFifoFD, &nRequests, sizeof(nRequests));
-
-    printf("Nr de requests enviado, vou tentar criar as threads de processamento\n");
     
     int generatorArgs[] = {nRequests, maxUsage};
     pthread_t genTID, rejTID;
     pthread_create(&genTID, NULL, generateRequests, generatorArgs);
     pthread_create(&rejTID, NULL, rejectedListener, NULL);
     
-    printf("Threads criadas, vou esperar que elas terminem\n");
-
     pthread_join(genTID, NULL);
     pthread_join(rejTID, NULL);
-
-    printf("Threads terminadas, vou terminar o programa\n");
 
     close(genFifoFD);
     close(rejFifoFD);
@@ -130,8 +113,6 @@ void* generateRequests(void* arg){
     
     srand(time(NULL));
     
-    printf("Sou a Thread geradora, vou gerar os requests\n");
-
     int i;
     for(i = 0; i < nRequests; i++){
 
@@ -157,16 +138,11 @@ void* generateRequests(void* arg){
          
     }
 
-    printf("Gerei os requests todos, vou sair\n");
-
     pthread_exit(NULL);
-    return NULL;
 }
 
 void* rejectedListener(void* arg){
     char keepReading = 1;
-
-    printf("Sou a Thread que gera os rejeitados, vou trabalhar\n");
 
     while (keepReading){
 
@@ -189,9 +165,6 @@ void* rejectedListener(void* arg){
             else{
                 FRejected++;
             }
-
-            printf("Pedido rejeitado recebido, vou reenvia-lo\n");
-
 	    }
 	    else{
 	        
@@ -208,16 +181,9 @@ void* rejectedListener(void* arg){
                 FRejected++;
 		        FDiscarded++;
             }
-
-            printf("Pedido rejeitado 3x, vou descarta-lo\n");
-
 	    }
     }
-
-    printf("Ja nao ha mais pedidos rejeitados, vou sair\n");
-
     pthread_exit(NULL);
-    return NULL;
 }
 
 void sigIntHandler(int signal){
