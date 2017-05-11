@@ -173,26 +173,24 @@ void* requestHandler(void* arg){
 	sleepTime.tv_sec = 0;
 	sleepTime.tv_nsec = request->time * 1000000;
 	
-	//pthread_mutex_lock(&mutexAccessSaunaSpace);
 	sem_wait(&steamRoomSem);
-	//pthread_mutex_unlock(&mutexAccessSaunaSpace);
 
 	while(nanosleep(&sleepTime, &sleepTime) == -1){
-		printf("Waiting for request %d's time to finish", request->request_number);
+		printf("Waiting for request %d's time to finish\n", request->request_number);
 	}
 
-	pthread_mutex_lock(&mutexAccessSaunaSpace);	
+	sem_post(&steamRoomSem);
+
+	pthread_mutex_lock(&mutexAccessSaunaSpace);
 
 	int remainReq;
 	sem_getvalue(&steamRoomSem, &remainReq);
 	
-	if (remainReq == maxCapacity - 1){
+	if (remainReq == maxCapacity){
 		currentGender = 'O';
 	}
 
 	pthread_mutex_unlock(&mutexAccessSaunaSpace);
-
-	sem_post(&steamRoomSem);
 	
 	pthread_exit(NULL);
 	return NULL;
