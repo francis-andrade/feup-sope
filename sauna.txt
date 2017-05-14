@@ -1,0 +1,30 @@
+			Sauna
+
+comando de invocação: ./sauna <capacidade máxima> 
+		 ex.: ./sauna 200
+
+Informação de Saída Padrão:
+Na Saída Padrão são apresentadas as estatísticas relativas ao programa sauna. Em seguida é apresentado um exemplo
+
+				Estatisticas:
+
+	Pedidos Recebidos:
+	Homens: 15521
+	Mulheres: 15716
+	Total: 31237
+
+	Pedidos Rejeitados:
+	Homens: 5533
+	Mulheres: 5805
+	Total: 11338
+
+	Pedidos Servidos:
+	Homens: 9988
+	Mulheres: 9911
+	Total: 19899
+
+
+
+Registos:
+o registo da informação relacionada com o programa gerador é feito no ficheiro /tmp/bal.pid, onde pid é o pid do programa gerador, por exemplo /tmp/bal.5690
+
