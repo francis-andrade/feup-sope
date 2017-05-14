@@ -193,13 +193,15 @@ void* requestHandler(void* arg){
 	
 	sem_wait(&steamRoomSem);
 
-       	writetofile(getpid(),pthread_self(),request.request_number, request.gender, request.time, "SERVIDO");
-
 
 	while(nanosleep(&sleepTime, &sleepTime) == -1);
 
-	sem_post(&steamRoomSem);
+	
+	writetofile(getpid(),pthread_self(),request.request_number, request.gender, request.time, "SERVIDO");
 
+	sem_post(&steamRoomSem);
+	
+	
 
 	pthread_mutex_lock(&mutexAccessSaunaSpace);
 
