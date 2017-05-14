@@ -172,7 +172,7 @@ int main(int argc, char* argv[]){
 
 	char buf2[256];
 	sprintf(buf2,"\n\n\t\tEstatisticas:\n\n\tPedidos Recebidos:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Servidos:\n\tHomens: %d\n\tMulheres: %d\n", MReceived, FReceived, MRejected, FRejected, MServed, FServed);
-	write(balpid, buf2, strlen(buf2));
+	write(STDOUT_FILENO, buf2, strlen(buf2));
 	close(rejectedFD);
 	close(generatorFD);
 	
