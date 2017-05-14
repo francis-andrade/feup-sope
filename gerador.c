@@ -144,7 +144,7 @@ void* generateRequests(void* arg){
             FGenerated++;
         }
         
-        request.time = rand() % (maxUsage - MINTIME) + MINTIME;
+        request.time = rand() % (maxUsage - MINTIME) + MINTIME+1;
         request.rejection_number = 0;  
 	writetofile(getpid(), request.request_number, request.gender,request.time, "PEDIDO");
         write(genFifoFD, & request, sizeof(Request));
