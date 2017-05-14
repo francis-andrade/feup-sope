@@ -1,0 +1,17 @@
+Identificação
+---------------------------------------
+Turma 2 Grupo 3
+
+Francisco Tuna de Andrade - up201503481
+José Nuno Amaro Freixo - up201504988
+Rui André Rebolo Fernandes Leixo - up201504818
+
+Race conditions e sincronização
+---------------
+.As possíveis race conditions, aquando da escrita para os fifos são tratadas pelo SO.
+
+.A o máximo número de clientes a dentro sauna, num dado monto, é controlado pelo semáforo steamRoomSem,
+inicializado a maxCapacity (agumento passado pela linha de comandos a sauna).
+
+.Um mutex para garantir que um thread copia o agumento que lhe é passado, antes que este seja
+modificado

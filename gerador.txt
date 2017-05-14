@@ -1,0 +1,25 @@
+			Gerador
+
+comando de invocação: ./gerador <numero de pedidos> <tempo máximo>
+		 ex.: ./gerador 10000 10
+
+Informação de Saída Padrão:
+Na Saída Padrão são apresentadas as estatísticas relativas ao programa gerador. Em seguida é apresentado um exemplo
+
+		Estatísticas:
+
+	Pedidos Gerados:
+	Homens: 5000
+	Mulheres: 5000
+
+	Pedidos Rejeitados:
+	Homens: 3170
+	Mulheres: 2494
+
+	Pedidos Descartados:
+	Homens: 0
+	Mulheres: 
+
+Registos:
+o registo da informação relacionada com o programa gerador é feito no ficheiro /tmp/ger.pid, onde pid é o pid do programa gerador, por exemplo /tmp/ger.5689
+
