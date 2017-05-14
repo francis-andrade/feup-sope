@@ -177,11 +177,11 @@ void* rejectedListener(void* arg){
             else{
                 FRejected++;
             }
-	    }
-	    else{
+	 }
+	 else{
 	        
            writetofile(getpid(), request.request_number, request.gender, request.time, "DESCARTADO");
-	        write(genFifoFD, & request, sizeof(Request));
+	        //write(genFifoFD, & request, sizeof(Request));
             
             if (request.gender == 'M'){
                 MRejected++;
@@ -192,7 +192,7 @@ void* rejectedListener(void* arg){
                 FRejected++;
 		        FDiscarded++;
             }
-	    }
+	 }
     }
     pthread_exit(NULL);
 }
