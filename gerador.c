@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 	int maxUsage = atoi(argv[2]);
 
 	if (maxUsage > MAXTIME  || maxUsage <= MINTIME){
-		fprintf(stderr, "Invalid number of max usage time\n");
+		fprintf(stderr, "Invalid number of max usage time, must be between 1 and 50\n");
 		exit(3);
 	}
 	
@@ -116,6 +116,8 @@ int main(int argc, char* argv[]) {
     close(rejFifoFD);
     close(gerpid);
     unlink("/tmp/entrada");
+
+    return 0;
 }
 
 void* generateRequests(void* arg){

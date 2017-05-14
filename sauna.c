@@ -179,6 +179,8 @@ int main(int argc, char* argv[]){
 	free(threadIDs);
 	unlink("/tmp/rejeitados");
 	close(balpid);
+
+	return 0;
 }
 
 void* requestHandler(void* arg){
