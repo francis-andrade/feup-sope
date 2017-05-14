@@ -171,14 +171,16 @@ int main(int argc, char* argv[]){
 
 
 	char buf2[256];
-	sprintf(buf2,"\n\n\t\tEstatisticas:\n\n\tPedidos Recebidos:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Servidos:\n\tHomens: %d\n\tMulheres: %d\n", MReceived, FReceived, MRejected, FRejected, MServed, FServed);
-	write(balpid, buf2, strlen(buf2));
+	sprintf(buf2,"\n\t\tEstatisticas:\n\n\tPedidos Recebidos:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n\n\tPedidos Servidos:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n", MReceived, FReceived, MReceived + FReceived, MRejected, FRejected, MRejected + FRejected, MServed, FServed, MServed + FServed);
+	write(STDOUT_FILENO, buf2, strlen(buf2));
 	close(rejectedFD);
 	close(generatorFD);
 	
 	free(threadIDs);
 	unlink("/tmp/rejeitados");
 	close(balpid);
+
+	return 0;
 }
 
 void* requestHandler(void* arg){

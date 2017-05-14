@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 	int maxUsage = atoi(argv[2]);
 
 	if (maxUsage > MAXTIME  || maxUsage <= MINTIME){
-		fprintf(stderr, "Invalid number of max usage time\n");
+		fprintf(stderr, "Invalid number of max usage time, must be between 1 and 50\n");
 		exit(3);
 	}
 	
@@ -109,13 +109,15 @@ int main(int argc, char* argv[]) {
 
 
      char buf2[256];
-    sprintf(buf2,"\n\t\tEstatisticas:\n\n\tPedidos Gerados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Descartados:\n\tHomens: %d\n\tMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
-    write(gerpid, buf2, strlen(buf2));
+    sprintf(buf2,"\n\t\tEstatisticas:\n\n\tPedidos Gerados:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n\n\tPedidos Descartados:\n\tHomens: %d\n\tMulheres: %d\n\tTotal: %d\n", MGenerated, FGenerated, MGenerated + FGenerated, MRejected, FRejected, MRejected + FRejected, MDiscarded, FDiscarded, MDiscarded + FDiscarded);
+    write(STDOUT_FILENO, buf2, strlen(buf2));
 
     close(genFifoFD);
     close(rejFifoFD);
     close(gerpid);
     unlink("/tmp/entrada");
+
+    return 0;
 }
 
 void* generateRequests(void* arg){
@@ -178,8 +180,7 @@ void* rejectedListener(void* arg){
 	    }
 	    else{
 	        
-           writetofile(getpid(), request.request_number, request.gender, request.time, "DESCARTADO");
-	        write(genFifoFD, & request, sizeof(Request));
+            writetofile(getpid(), request.request_number, request.gender, request.time, "DESCARTADO");
             
             if (request.gender == 'M'){
                 MRejected++;
