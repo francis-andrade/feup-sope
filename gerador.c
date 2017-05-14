@@ -12,6 +12,7 @@
 #include <math.h>
 #include <fenv.h>
 #include <signal.h>
+#include <string.h>
 #include "utilities.h"
 
 #define FIFO_PERM 0700
@@ -22,6 +23,7 @@
 void* generateRequests(void* arg);
 void* rejectedListener(void* arg);
 void sigIntHandler(int signal);
+void writetofile(unsigned long pid, unsigned int rnumber, char gender, unsigned int rtime, char * msg);
 
 int genFifoFD;
 int rejFifoFD;
@@ -33,7 +35,7 @@ unsigned int FRejected = 0;
 unsigned int MDiscarded = 0;
 unsigned int FDiscarded = 0;
 
-FILE * gerpid;
+int gerpid;
 
 int main(int argc, char* argv[]) {
 
@@ -86,7 +88,14 @@ int main(int argc, char* argv[]) {
         exit(7);
     }
 
-    gerpid=fopen("/tmp/ger.pid", "w");
+   //OPENS File to write the information    
+   char filename[256];
+   sprintf(filename, "/tmp/ger.%d",getpid());
+   if((gerpid=open(filename, O_WRONLY | O_CREAT))==-1){
+	perror("Error on creating the file to write the statistics");
+	exit(8);
+    }    
+
     //Send the number of total requests to the sauna
     write(genFifoFD, &nRequests, sizeof(nRequests));
     
@@ -98,12 +107,15 @@ int main(int argc, char* argv[]) {
     pthread_join(genTID, NULL);
     pthread_join(rejTID, NULL);
 
+
+     char buf2[256];
+    sprintf(buf2,"\n\t\tEstatisticas:\n\n\tPedidos Gerados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Rejeitados:\n\tHomens: %d\n\tMulheres: %d\n\n\tPedidos Descartados:\n\tHomens: %d\n\tMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
+    write(gerpid, buf2, strlen(buf2));
+
     close(genFifoFD);
     close(rejFifoFD);
-
+    close(gerpid);
     unlink("/tmp/entrada");
-    printf("\t\tEstatisticas\n\n\tPedidos Gerados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Rejeitados:\nHomens: %d\nMulheres: %d\n\n\tPedidos Descartados:\nHomens: %d\nMulheres: %d\n", MGenerated, FGenerated, MRejected, FRejected, MDiscarded, FDiscarded);
-
 }
 
 void* generateRequests(void* arg){
@@ -132,8 +144,7 @@ void* generateRequests(void* arg){
         
         request.time = rand() % (maxUsage - MINTIME) + MINTIME;
         request.rejection_number = 0;  
-	    double time=round(getProcTime()*100)/100;      
-        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "PEDIDO");
+	writetofile(getpid(), request.request_number, request.gender,request.time, "PEDIDO");
         write(genFifoFD, & request, sizeof(Request));
          
     }
@@ -154,8 +165,7 @@ void* rejectedListener(void* arg){
         
         else if(request.rejection_number < 3){
 	        
-            double time=round(getProcTime()*100)/100;  
-	        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "REJEITADO");
+             writetofile(getpid(), request.request_number, request.gender,request.time, "REJEITADO");
 	        write(genFifoFD, & request, sizeof(Request));
            
             if (request.gender == 'M'){
@@ -168,8 +178,7 @@ void* rejectedListener(void* arg){
 	    }
 	    else{
 	        
-            double time=round(getProcTime()*100)/100;  
-	        fprintf(gerpid,"%s - %s - %s: %c - %s - %s\n",swidth(time, 11,2), swidth(getpid(), 7,2), swidth(request.request_number,7,2), request.gender, swidth(request.time,7,2), "DESCARTADO");
+           writetofile(getpid(), request.request_number, request.gender, request.time, "DESCARTADO");
 	        write(genFifoFD, & request, sizeof(Request));
             
             if (request.gender == 'M'){
@@ -189,4 +198,28 @@ void* rejectedListener(void* arg){
 void sigIntHandler(int signal){
 	unlink("/tmp/entrada");
     exit(-6);
+}
+
+
+
+void writetofile(unsigned long pid, unsigned int rnumber, char gender, unsigned int rtime, char * msg){
+	char str[256];
+	char buf[256];
+
+	double time=round(getProcTime()*100)/100;  
+	char stime[256];
+	swidth(stime, time, 11,2);
+	
+	sprintf(buf, "%lu", pid);
+	char spid[256];
+	strwidth(spid, buf, 8);
+	
+	char srnumber[256];
+	swidth(srnumber, rnumber, 7, 0);
+
+	char srtime[256];
+	swidth(srtime, rtime, 7, 0);
+
+	sprintf(str,"%s   - %s   - %s:   %c - %s   -  %s\n",stime, spid, srnumber, gender, srtime, msg);
+	write(gerpid, str, strlen(str));
 }

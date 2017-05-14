@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <string.h>
 
 double getProcTime(){
     struct timespec currTime;
@@ -18,7 +19,7 @@ double getProcTime(){
 
 int ndigits(double d){
 	int r=1;
-	int k=1;
+	unsigned long k=1;
 	while((k*10)<=d){
 		k=k*10;
 		r++;
@@ -35,31 +36,34 @@ int min(int a, int b){
 	}
 }
 
-char * swidth(double n, int width, int decimal){
-	char * rs=malloc(256*sizeof(char));
+void swidth(char * rs, double n, int width, int decimal){
 	if(decimal==0){
-		int r=(int) (round(n));
+		unsigned long r=(unsigned long) (round(n));
 		int dig=ndigits(n);
 		int i;
 		for(i=0;i<width-dig;i++){
 			rs[i]=' ';
 		}
-		sprintf(& rs[width-dig], "%d",r);
-		return rs;
+		sprintf(& rs[width-dig], "%lu",r);
 	}
 	else if(decimal==1){
 		int r=(int) (round(n*10));
 		int dig=ndigits(r);
+		if(r/10==0){
+			dig++;
+		}
 		int i;
 		for(i=0;i<width-dig-1;i++){
 			rs[i]=' ';
 		}
 		sprintf(& rs[width-dig-1], "%d.%d",r/10, r%10);
-		return rs;
 	}
 	else if(decimal==2){
 		int r=(int) (round(n*100));
 		int dig=ndigits(r);
+		if(r/100==0){
+			dig++;
+		}
 		int i;
 		for(i=0;i<width-dig-1;i++){
 			rs[i]=' ';
@@ -70,12 +74,20 @@ char * swidth(double n, int width, int decimal){
 		else{
 			sprintf(& rs[width-dig-1], "%d.%d",r/100, r%100);
 		}
-		return rs;
 	}
-	else{
-		return NULL;
-	}
-
 	
 }
 
+void strwidth(char * rs,char * str, int width){
+	if(strlen(str)>width){
+		return;	
+	}
+	int i;
+	for(i=0;i<width-strlen(str);i++){
+		rs[i]=' ';
+	}
+	for(i=width-strlen(str);i<width;i++){
+		rs[i]=str[i+strlen(str)-width];
+	}
+	rs[width]=0;
+}

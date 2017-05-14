@@ -15,14 +15,16 @@ struct timespec processStart;
 double getProcTime();
 
 /**
-*@brief This function returns a number in the form of a string with a certain width
+*@brief This function transforms a string in a number with a certain width (that is with a certain number of spaces to be determined on front of it)
+*@param rs string that is going to be transformed
 *@param n number that is going to be passed to a string with a certain width
 *@param width width of the string that is going to be returned
 *@param decimal number of decimal places. They can only be 0, 1 or 2
-*@return Returns a string
 */
-char * swidth(double n, int width, int decimal);
+void swidth(char * rs, double n, int width, int decimal);
 
+
+void strwidth(char * rs,char * str, int width);
 #endif
 
 
