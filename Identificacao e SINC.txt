@@ -8,10 +8,12 @@ Rui André Rebolo Fernandes Leixo - up201504818
 
 Race conditions e sincronização
 ---------------
-.As possíveis race conditions, aquando da escrita para os fifos são tratadas pelo SO.
+.As possíveis race conditions, aquando da escrita para os fifos são tratadas pelo Sistema Operativo.
 
-.A o máximo número de clientes a dentro sauna, num dado monto, é controlado pelo semáforo steamRoomSem,
+.O número máximo de clientes dentro da sauna, num dado momento, é controlado pelo semáforo steamRoomSem,
 inicializado a maxCapacity (agumento passado pela linha de comandos a sauna).
 
-.Um mutex para garantir que um thread copia o agumento que lhe é passado, antes que este seja
-modificado
+.É utilizado um semáforo thrdArgSem no programa sauna para garantir que um thread copia o agumento que lhe é passado, antes que este seja
+modificado. 
+
+.É utilizado um mutex mutexAccessSaunaSpace no programa sauna para garantir que a variável global currentGender só é modificada por uma thread de cada vez.

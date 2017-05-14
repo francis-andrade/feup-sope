@@ -4,7 +4,7 @@ comando de invocação: ./sauna <capacidade máxima>
 		 ex.: ./sauna 200
 
 Informação de Saída Padrão:
-Na Saída Padrão são apresentadas as estatísticas relativas ao programa sauna. Em seguida é apresentado um exemplo
+Na Saída Padrão são apresentadas as estatísticas relativas ao programa sauna. Em seguida é apresentado um exemplo:
 
 				Estatisticas:
 
